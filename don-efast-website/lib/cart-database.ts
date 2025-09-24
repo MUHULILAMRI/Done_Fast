@@ -208,7 +208,18 @@ export class CartDatabase {
     }
 
     try {
-      const { error } = await this.supabase.from("cart_items").update(updates).eq("id", id)
+      const {
+        data: { user },
+      } = await this.supabase.auth.getUser()
+
+      let query = this.supabase.from("cart_items").update(updates).eq("id", id)
+
+      if (!user) {
+        const sessionId = getSessionId()
+        query = query.eq("session_id", sessionId)
+      }
+
+      const { error } = await query
 
       if (error) {
         console.error("[v0] Error updating cart item:", error)
@@ -230,7 +241,18 @@ export class CartDatabase {
     }
 
     try {
-      const { error } = await this.supabase.from("cart_items").delete().eq("id", id)
+      const {
+        data: { user },
+      } = await this.supabase.auth.getUser()
+
+      let query = this.supabase.from("cart_items").delete().eq("id", id)
+
+      if (!user) {
+        const sessionId = getSessionId()
+        query = query.eq("session_id", sessionId)
+      }
+
+      const { error } = await query
 
       if (error) {
         console.error("[v0] Error removing from cart:", error)

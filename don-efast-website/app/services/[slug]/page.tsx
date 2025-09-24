@@ -33,8 +33,8 @@ const servicesData = {
     icon: FileText,
     category: "Academic",
     popular: false,
-    deliveryTime: "3-7 hari",
-    revisions: "3x revisi gratis",
+    deliveryTime: "3-5 hari",
+    revisions: "2x revisi gratis",
     longDescription:
       "Kami menyediakan layanan penulisan akademik profesional yang membantu Anda menyelesaikan berbagai tugas penulisan dengan kualitas terbaik. Tim penulis berpengalaman kami siap membantu dari essay sederhana hingga paper penelitian yang kompleks.",
     features: [
@@ -83,7 +83,7 @@ const servicesData = {
   },
   "joki-skripsi": {
     title: "Joki Skripsi",
-    description: "Bantuan penyelesaian skripsi, tesis, dan disertasi dengan kualitas terbaik",
+    description: "Bantuan penyelesaian skripsi,  dengan kualitas terbaik",
     price: "Mulai dari 900k",
     icon: BookOpen,
     category: "Academic",
@@ -91,11 +91,9 @@ const servicesData = {
     deliveryTime: "2-4 minggu",
     revisions: "Revisi berkali-kali",
     longDescription:
-      "Layanan bantuan penyelesaian skripsi, tesis, dan disertasi yang komprehensif. Kami membantu dari tahap proposal hingga sidang dengan pendampingan intensif dari dosen berpengalaman dan peneliti profesional.",
+      "Layanan bantuan penyelesaian skripsi. Kami membantu dari tahap proposal hingga sidang dengan pendampingan intensif dari dosen berpengalaman dan peneliti profesional.",
     features: [
       "Skripsi S1 semua jurusan",
-      "Tesis S2 dengan metodologi tepat",
-      "Disertasi S3 berkualitas internasional",
       "Proposal & Bab 1-5 lengkap",
       "Analisis Data SPSS/R/Python",
     ],
@@ -133,7 +131,7 @@ const servicesData = {
   "joki-program": {
     title: "Joki Pembuatan Program",
     description: "Pengembangan aplikasi dan sistem sesuai kebutuhan Anda",
-    price: "Mulai dari 800k",
+    price: "Mulai dari 1.8jt",
     icon: Code,
     category: "Programming",
     popular: false,
@@ -158,12 +156,12 @@ const servicesData = {
     packages: [
       {
         name: "Web Basic",
-        price: "800k",
+        price: "1.5jt",
         features: ["Website statis/landing page", "Responsive design", "Basic SEO", "Hosting setup"],
       },
       {
         name: "Web App",
-        price: "2jt",
+        price: "3jt",
         features: [
           "Web aplikasi dinamis",
           "Database integration",
@@ -174,7 +172,7 @@ const servicesData = {
       },
       {
         name: "Full Stack",
-        price: "4jt",
+        price: "7jt",
         features: [
           "Web + Mobile app",
           "Advanced features",
@@ -188,7 +186,7 @@ const servicesData = {
   "joki-jurnal": {
     title: "Joki Jurnal Ilmiah",
     description: "Penulisan dan publikasi jurnal ilmiah berkualitas tinggi",
-    price: "Mulai dari 1.2jt",
+    price: "Mulai dari 1jt",
     icon: Microscope,
     category: "Academic",
     popular: false,
@@ -243,12 +241,12 @@ const servicesData = {
   "joki-3d": {
     title: "Joki 3D Modeling",
     description: "Pembuatan model 3D profesional untuk berbagai keperluan",
-    price: "Mulai dari 500k",
+    price: "Mulai dari 1.5jt",
     icon: Cube,
     category: "Design",
     popular: false,
     deliveryTime: "5-10 hari",
-    revisions: "3x revisi gratis",
+    revisions: "2x revisi gratis",
     longDescription:
       "Layanan pembuatan model 3D profesional untuk berbagai kebutuhan industri dan akademik. Tim designer berpengalaman kami menggunakan software terdepan untuk menghasilkan model 3D berkualitas tinggi.",
     features: [
