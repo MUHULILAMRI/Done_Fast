@@ -15,15 +15,22 @@ export function CartSidebar() {
   const generateWhatsAppMessage = () => {
     if (state.items.length === 0) return ""
 
-    let message = "Halo, saya ingin memesan layanan berikut:\n\n"
+    let message = "Halo, saya ingin memesan layanan ini:\n\n"
+    let grandTotal = 0
 
     state.items.forEach((item, index) => {
-      message += `${index + 1}. ${item.serviceName} - ${item.packageName}\n`
-      message += `   Harga: ${item.price}\n`
-      message += `   Jumlah: ${item.quantity}\n\n`
+      const priceNumber = Number.parseInt(item.price.replace(/[^\d]/g, ""))
+      const subtotal = priceNumber * item.quantity
+      grandTotal += subtotal
+
+      message += `${index + 1}. *${item.serviceName} - ${item.packageName}*\n`
+      message += `   - Harga: ${item.price}\n`
+      message += `   - Jumlah: ${item.quantity}\n`
+      message += `   - Subtotal: Rp ${subtotal.toLocaleString("id-ID")}\n\n`
     })
 
-    message += "Mohon informasi lebih lanjut mengenai proses pemesanan. Terima kasih!"
+    message += `*Total Pesanan: Rp ${grandTotal.toLocaleString("id-ID")}*\n\n`
+    message += "Mohon tunggu konfirmasi dari admin untuk lebih lanjut mengenai proses pemesanan. Terima kasih!"
 
     return encodeURIComponent(message)
   }
