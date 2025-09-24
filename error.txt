@@ -1,0 +1,15 @@
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+Error occurred prerendering page "/services". Read more: https://nextjs.org/docs/messages/prerender-error
+Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
+ ELIFECYCLE  Command failed with exit code 1.
+Error: Command "pnpm run build" exited with 1
+
+
+
+
