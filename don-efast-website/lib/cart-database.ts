@@ -182,7 +182,7 @@ export class CartDatabase {
         const { error } = await this.supabase.from("cart_items").insert([cartItem])
 
         if (error) {
-          console.error("[v0] Error adding to cart:", error)
+          console.error("[v0] Error adding to cart:", error.message, error.details, error.hint, error.code)
           return false
         }
 

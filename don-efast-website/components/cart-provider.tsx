@@ -168,6 +168,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SET_LOADING", payload: true })
     try {
       const dbItem = convertCartItemToDBItem(item)
+      console.log("[v0] dbItem before adding to cart:", dbItem)
       const success = await cartDB.addToCart(dbItem)
 
       if (success) {
