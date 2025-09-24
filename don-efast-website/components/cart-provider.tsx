@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useReducer, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useReducer, useEffect, type ReactNode, useMemo } from "react"
 import { CartDatabase, type CartItem as DBCartItem } from "@/lib/cart-database"
 
 interface CartItem {
@@ -145,7 +145,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     isLoading: false,
   })
 
-  const cartDB = new CartDatabase()
+  const cartDB = useMemo(() => new CartDatabase(), [])
 
   useEffect(() => {
     const loadCartItems = async () => {
@@ -162,7 +162,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
 
     loadCartItems()
-  }, [])
+  }, [cartDB])
 
   const addToCart = async (item: Omit<CartItem, "quantity">) => {
     dispatch({ type: "SET_LOADING", payload: true })

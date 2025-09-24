@@ -131,6 +131,12 @@ export default function ServicesPage() {
     addToCart({
       id: `${service.id}-basic`,
       name: `${service.title} - Basic Package`,
+      get name() {
+        return this._name
+      },
+      set name(value) {
+        this._name = value
+      },
       price: service.price,
       service: service.title,
       package: "Basic Package",
