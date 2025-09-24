@@ -1,11 +1,10 @@
-Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
-Error occurred prerendering page "/_not-found". Read more: https://nextjs.org/docs/messages/prerender-error
-Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
-Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
-Error occurred prerendering page "/". Read more: https://nextjs.org/docs/messages/prerender-error
-Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
-Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
-Error occurred prerendering page "/services". Read more: https://nextjs.org/docs/messages/prerender-error
-Error: @supabase/ssr: Your project's URL and API key are required to create a Supabase client!
-ELIFECYCLE  Command failed with exit code 1.
-Error: Command "pnpm run build" exited with 1
+Failed to compile
+
+Next.js (14.2.16) is outdated (learn more)
+./app/page.tsx
+'client-only' cannot be imported from a Server Component module. It should only be used from a Client Component.
+
+The error was caused by using 'styled-jsx' in './app/page.tsx'. It only works in a Client Component but none of its parents are marked with "use client", so they're Server Components by default.
+
+Import trace for requested module:
+./app/page.tsx
