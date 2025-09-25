@@ -87,7 +87,6 @@ export default function ServicesPage() {
       service_title: service.title,
       package_name: "Paket Tunggal", // Default package name for single services
       price: service.price || 0,
-      quantity: 1,
     })
   }
 
@@ -103,7 +102,6 @@ export default function ServicesPage() {
               service_title: service.title,
               package_name: subOption.name,
               price: subOption.price,
-              quantity: 1,
             })
           }
         }

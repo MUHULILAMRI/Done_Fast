@@ -347,13 +347,24 @@ export default function ServiceDetailPage({ params }: ServiceDetailPageProps) {
 
   const IconComponent = service.icon
 
-  const handleAddToCart = async (packageData: any) => {
-    await addToCart({
-      id: `${params.slug}-${packageData.name.toLowerCase()}`,
-      serviceId: params.slug,
-      serviceName: service.title,
-      packageName: packageData.name,
-      price: packageData.price,
+  const parsePrice = (priceStr: string): number => {
+    const cleaned = priceStr.toLowerCase().replace(/\s/g, "")
+    let multiplier = 1
+    if (cleaned.includes("jt")) {
+      multiplier = 1000000
+    } else if (cleaned.includes("k")) {
+      multiplier = 1000
+    }
+    const num = parseFloat(cleaned.replace("jt", "").replace("k", "").replace(",", "."))
+    return isNaN(num) ? 0 : num * multiplier
+  }
+
+  const handleAddToCart = (pkg: any) => {
+    addToCart({
+      service_slug: params.slug,
+      service_title: service.title,
+      package_name: pkg.name,
+      price: parsePrice(pkg.price),
     })
   }
 

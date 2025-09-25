@@ -1,9 +1,21 @@
 "use client"
 
 import type React from "react"
-import { createContext, useContext, useReducer, useEffect, type ReactNode, useMemo } from "react"
+import {
+  createContext,
+  useContext,
+  useReducer,
+  useEffect,
+  useState,
+  type ReactNode,
+  useMemo,
+  useCallback,
+} from "react"
 import { CartDatabase, type CartItem as DBCartItem } from "@/lib/cart-database"
+import { CustomerInfoModal } from "@/components/customer-info-modal"
+import { useToast } from "@/components/ui/use-toast"
 
+// This is the CartItem shape used for the UI state
 interface CartItem {
   id: string
   serviceId: string
@@ -13,6 +25,10 @@ interface CartItem {
   quantity: number
 }
 
+// This is the type for the item that pages pass to initiate adding to cart
+// It matches the structure I created in the services pages
+export type NewCartItemPayload = Omit<DBCartItem, "id" | "created_at" | "updated_at" | "quantity">
+
 interface CartState {
   items: CartItem[]
   isOpen: boolean
@@ -21,7 +37,7 @@ interface CartState {
 
 type CartAction =
   | { type: "SET_ITEMS"; payload: CartItem[] }
-  | { type: "ADD_ITEM"; payload: Omit<CartItem, "quantity"> }
+  | { type: "ADD_ITEM"; payload: CartItem } // Reducer now gets a full CartItem
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "CLEAR_CART" }
@@ -33,7 +49,7 @@ type CartAction =
 const CartContext = createContext<{
   state: CartState
   dispatch: React.Dispatch<CartAction>
-  addToCart: (item: Omit<CartItem, "quantity">) => Promise<void>
+  addToCart: (item: NewCartItemPayload) => void // This is now the public signature
   removeFromCart: (id: string) => Promise<void>
   updateQuantity: (id: string, quantity: number) => Promise<void>
   clearCart: () => Promise<void>
@@ -42,16 +58,13 @@ const CartContext = createContext<{
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
     case "SET_ITEMS":
-      return {
-        ...state,
-        items: action.payload,
-      }
+      return { ...state, items: action.payload }
 
     case "ADD_ITEM":
       const existingItem = state.items.find(
-        (item) => item.serviceId === action.payload.serviceId && item.packageName === action.payload.packageName,
+        (item) =>
+          item.serviceId === action.payload.serviceId && item.packageName === action.payload.packageName,
       )
-
       if (existingItem) {
         return {
           ...state,
@@ -60,17 +73,10 @@ function cartReducer(state: CartState, action: CartAction): CartState {
           ),
         }
       }
-
-      return {
-        ...state,
-        items: [...state.items, { ...action.payload, quantity: 1 }],
-      }
+      return { ...state, items: [...state.items, action.payload] }
 
     case "REMOVE_ITEM":
-      return {
-        ...state,
-        items: state.items.filter((item) => item.id !== action.payload),
-      }
+      return { ...state, items: state.items.filter((item) => item.id !== action.payload) }
 
     case "UPDATE_QUANTITY":
       return {
@@ -81,41 +87,26 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       }
 
     case "CLEAR_CART":
-      return {
-        ...state,
-        items: [],
-      }
+      return { ...state, items: [] }
 
     case "TOGGLE_CART":
-      return {
-        ...state,
-        isOpen: !state.isOpen,
-      }
+      return { ...state, isOpen: !state.isOpen }
 
     case "OPEN_CART":
-      return {
-        ...state,
-        isOpen: true,
-      }
+      return { ...state, isOpen: true }
 
     case "CLOSE_CART":
-      return {
-        ...state,
-        isOpen: false,
-      }
+      return { ...state, isOpen: false }
 
     case "SET_LOADING":
-      return {
-        ...state,
-        isLoading: action.payload,
-      }
+      return { ...state, isLoading: action.payload }
 
     default:
       return state
   }
 }
 
-function convertDBItemToCartItem(dbItem: DBCartItem): CartItem {
+function convertDBItemToUICartItem(dbItem: DBCartItem): CartItem {
   return {
     id: dbItem.id!,
     serviceId: dbItem.service_slug,
@@ -126,61 +117,78 @@ function convertDBItemToCartItem(dbItem: DBCartItem): CartItem {
   }
 }
 
-function convertCartItemToDBItem(
-  cartItem: Omit<CartItem, "quantity">,
-): Omit<DBCartItem, "id" | "created_at" | "updated_at"> {
-  console.log("[v0] convertCartItemToDBItem received cartItem:", cartItem)
-  return {
-    service_slug: cartItem.service_slug,
-    service_title: cartItem.service_title,
-    package_name: cartItem.package_name,
-    price: cartItem.price,    quantity: 1,
-  }
-}
-
 export function CartProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, {
     items: [],
     isOpen: false,
-    isLoading: false,
+    isLoading: true, // Start with loading true
   })
+
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [pendingItem, setPendingItem] = useState<NewCartItemPayload | null>(null)
+  const { toast } = useToast()
 
   const cartDB = useMemo(() => new CartDatabase(), [])
 
-  useEffect(() => {
-    const loadCartItems = async () => {
-      dispatch({ type: "SET_LOADING", payload: true })
-      try {
-        const dbItems = await cartDB.getCartItems()
-        const cartItems = dbItems.map(convertDBItemToCartItem)
-        dispatch({ type: "SET_ITEMS", payload: cartItems })
-      } catch (error) {
-        console.error("Error loading cart items:", error)
-      } finally {
-        dispatch({ type: "SET_LOADING", payload: false })
-      }
-    }
-
-    loadCartItems()
-  }, [cartDB])
-
-  const addToCart = async (item: Omit<CartItem, "quantity">) => {
-    console.log("[v0] addToCart received item:", item)
+  const reloadCart = useCallback(async () => {
     dispatch({ type: "SET_LOADING", payload: true })
     try {
-      const dbItem = convertCartItemToDBItem(item)
-      console.log("[v0] dbItem before adding to cart:", dbItem)
-      const success = await cartDB.addToCart(dbItem)
+      const dbItems = await cartDB.getCartItems()
+      const cartItems = dbItems.map(convertDBItemToUICartItem)
+      dispatch({ type: "SET_ITEMS", payload: cartItems })
+    } catch (error) {
+      console.error("Error loading cart items:", error)
+    } finally {
+      dispatch({ type: "SET_LOADING", payload: false })
+    }
+  }, [cartDB])
 
+  useEffect(() => {
+    reloadCart()
+  }, [reloadCart])
+
+  // Public addToCart: opens the modal
+  const addToCart = (item: NewCartItemPayload) => {
+    setPendingItem(item)
+    setIsModalOpen(true)
+  }
+
+  // Internal function to handle the actual cart addition after getting user info
+  const handleModalSubmit = async (name: string, phone: string) => {
+    if (!pendingItem) return
+
+    dispatch({ type: "SET_LOADING", payload: true })
+    setIsModalOpen(false)
+
+    const itemWithCustomerInfo: Omit<DBCartItem, "id" | "created_at" | "updated_at"> = {
+      ...pendingItem,
+      customer_name: name,
+      customer_phone: phone,
+      quantity: 1,
+    }
+
+    try {
+      const success = await cartDB.addToCart(itemWithCustomerInfo)
       if (success) {
-        // Reload items from database to get updated state
-        const dbItems = await cartDB.getCartItems()
-        const cartItems = dbItems.map(convertDBItemToCartItem)
-        dispatch({ type: "SET_ITEMS", payload: cartItems })
+        await reloadCart() // Reload from DB to get the source of truth
+        dispatch({ type: "OPEN_CART" })
+        toast({
+          title: "Sukses!",
+          description: `${pendingItem.service_title} telah ditambahkan ke keranjang.`,
+          className: "bg-green-600 text-white border-green-700",
+        })
+      } else {
+        throw new Error("Failed to add item to database.")
       }
     } catch (error) {
       console.error("Error adding to cart:", error)
+      toast({
+        title: "Gagal",
+        description: "Terjadi kesalahan saat menambahkan item ke keranjang.",
+        variant: "destructive",
+      })
     } finally {
+      setPendingItem(null)
       dispatch({ type: "SET_LOADING", payload: false })
     }
   }
@@ -189,7 +197,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SET_LOADING", payload: true })
     try {
       const success = await cartDB.removeFromCart(id)
-
       if (success) {
         dispatch({ type: "REMOVE_ITEM", payload: id })
       }
@@ -205,11 +212,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       await removeFromCart(id)
       return
     }
-
     dispatch({ type: "SET_LOADING", payload: true })
     try {
       const success = await cartDB.updateCartItem(id, { quantity })
-
       if (success) {
         dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } })
       }
@@ -224,7 +229,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "SET_LOADING", payload: true })
     try {
       const success = await cartDB.clearCart()
-
       if (success) {
         dispatch({ type: "CLEAR_CART" })
       }
@@ -247,6 +251,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }}
     >
       {children}
+      <CustomerInfoModal
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false)
+          setPendingItem(null)
+        }}
+        onSubmit={handleModalSubmit}
+      />
     </CartContext.Provider>
   )
 }

@@ -4,6 +4,8 @@ export interface CartItem {
   id?: string
   user_id?: string
   session_id?: string
+  customer_name?: string
+  customer_phone?: string
   service_slug: string
   service_title: string
   package_name: string

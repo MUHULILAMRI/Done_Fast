@@ -11,7 +11,7 @@ import { useState, useEffect } from "react"
 
 const adminNavItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dasbor" },
-  // { href: "/admin/orders", icon: ShoppingCart, label: "Pesanan" }, // Future feature
+  { href: "/admin/orders", icon: ShoppingCart, label: "Pesanan" },
   // { href: "/admin/users", icon: Users, label: "Pengguna" }, // Future feature
   // { href: "/admin/settings", icon: Settings, label: "Pengaturan" }, // Future feature
 ]

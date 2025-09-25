@@ -1,9 +1,7 @@
 "use client"
 
 import { useEffect, useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
 import { createClient } from "@/lib/supabase/client"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Table,
@@ -14,31 +12,31 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts"
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Loader2, LogOut, Search, ChevronLeft, ChevronRight, ClipboardCopy } from "lucide-react"
+  ChartContainer,
+  ChartTooltipContent,
+  type ChartConfig,
+} from "@/components/ui/chart"
+import {
+  DollarSign,
+  ShoppingCart,
+  CheckCircle,
+  Loader as LoaderIcon, // Renamed to avoid conflict
+} from "lucide-react"
 import type { CartItem } from "@/lib/cart-database"
-
-// Define a more detailed type for the admin dashboard
-interface AdminCartItem extends CartItem {
-  users: {
-    full_name: string | null
-    phone: string | null
-  } | null
-}
+import { useRouter } from "next/navigation"
+import { Loader2 } from "lucide-react"
 
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
@@ -49,352 +47,255 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-const statusOptions = ["all", "pending", "proses", "success", "failed"]
+const barChartConfig = {
+  revenue: {
+    label: "Pendapatan",
+    color: "hsl(var(--chart-1))",
+  },
+} satisfies ChartConfig
+
+const pieChartConfig = {
+  pending: {
+    label: "Pending",
+    color: "hsl(var(--chart-1))",
+  },
+  proses: {
+    label: "Proses",
+    color: "hsl(var(--chart-2))",
+  },
+  success: {
+    label: "Success",
+    color: "hsl(var(--chart-3))",
+  },
+  failed: {
+    label: "Failed",
+    color: "hsl(var(--chart-4))",
+  },
+} satisfies ChartConfig
 
 export default function AdminDashboardPage() {
-  const [allCartItems, setAllCartItems] = useState<AdminCartItem[]>([])
+  const [data, setData] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [filterStatus, setFilterStatus] = useState("all")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [currentPage, setCurrentPage] = useState(1)
-  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
-  const [messageTemplate, setMessageTemplate] = useState("")
-  const [hasCopied, setHasCopied] = useState(false)
-  const itemsPerPage = 10
-
-  const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
-    const checkAuthAndFetchItems = async () => {
+    const fetchData = async () => {
       setLoading(true)
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
+      const { data: cartData, error: cartError } = await createClient()
+        .from("cart_items")
+        .select("*")
+        .order("created_at", { ascending: false })
 
-      if (!user) {
-        router.push("/admin/login")
-        return
-      }
-
-      try {
-        // 1. Fetch all cart items
-        const { data: cartData, error: cartError } = await supabase
-          .from("cart_items")
-          .select("*")
-          .order("created_at", { ascending: false })
-
-        if (cartError) {
-          throw cartError
-        }
-
-        // 2. Extract unique user IDs from cart items
-        const userIds = [...new Set(cartData.map((item) => item.user_id).filter(Boolean))]
-
-        let usersData: { id: string; full_name: string | null; phone: string | null }[] = []
-
-        // 3. Fetch user details if there are any user IDs
-        if (userIds.length > 0) {
-          const { data: fetchedUsers, error: usersError } = await supabase
-            .from("users")
-            .select("id, full_name, phone")
-            .in("id", userIds)
-
-          if (usersError) {
-            console.error("Error fetching user details:", usersError.message)
-          } else {
-            usersData = fetchedUsers
-          }
-        }
-
-        // 4. Create a map of user details for easy lookup
-        const usersMap = new Map(usersData.map((user) => [user.id, user]))
-
-        // 5. Merge cart items with user details
-        const combinedData: AdminCartItem[] = cartData.map((item) => ({
-          ...item,
-          users: item.user_id ? usersMap.get(item.user_id) || null : null,
-        }))
-
-        setAllCartItems(combinedData)
-      } catch (err: any) {
-        setError(err.message)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkAuthAndFetchItems()
-  }, [router, supabase])
-
-  const handleLogout = async () => {
-    setLoading(true)
-    await supabase.auth.signOut()
-    router.push("/admin/login")
-  }
-
-  const updateCartItemStatus = async (itemId: string, newStatus: string) => {
-    setLoading(true)
-    try {
-      const { error } = await supabase.from("cart_items").update({ status: newStatus }).eq("id", itemId)
-
-      if (error) {
-        setError(error.message)
+      if (cartError) {
+        setError(cartError.message)
       } else {
-        setAllCartItems((prevItems) =>
-          prevItems.map((item) => (item.id === itemId ? { ...item, status: newStatus } : item))
-        )
+        setData(cartData as CartItem[])
       }
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
       setLoading(false)
     }
-  }
+    fetchData()
+  }, [])
 
-  const handleGenerateTemplate = (item: AdminCartItem) => {
-    const userName = item.users?.full_name || "Pelanggan"
-    const phone = item.users?.phone || "Tidak ada nomor"
-
-    const message = `Halo, CS Done Fast.
-
-Mohon diproses pesanan untuk pelanggan atas nama:
-- Nama: ${userName}
-- No. WA: ${phone}
-
-Detail Pesanan:
-- Layanan: ${item.service_title}
-- Paket: ${item.package_name}
-- Jumlah: ${item.quantity}
-- Total: ${formatCurrency(item.price * item.quantity)}
-- Status Saat Ini: ${item.status}
-
-Terima kasih.`
-
-    setMessageTemplate(message)
-    setHasCopied(false)
-    setIsTemplateDialogOpen(true)
-  }
-
-  const filteredAndSearchedItems = useMemo(() => {
-    let items = allCartItems
-
-    if (filterStatus !== "all") {
-      items = items.filter((item) => item.status === filterStatus)
+  const analytics = useMemo(() => {
+    if (!data || data.length === 0) {
+      return {
+        totalRevenue: 0,
+        totalOrders: 0,
+        successfulOrders: 0,
+        pendingOrders: 0,
+        revenueByService: [],
+        ordersByStatus: [],
+        recentOrders: [],
+      }
     }
 
-    if (searchQuery) {
-      const lowerCaseQuery = searchQuery.toLowerCase()
-      items = items.filter(
-        (item) =>
-          item.service_title.toLowerCase().includes(lowerCaseQuery) ||
-          item.package_name.toLowerCase().includes(lowerCaseQuery) ||
-          item.user_id?.toLowerCase().includes(lowerCaseQuery) ||
-          item.session_id?.toLowerCase().includes(lowerCaseQuery)
-      )
-    }
-    return items
-  }, [allCartItems, filterStatus, searchQuery])
+    const successfulItems = data.filter((item) => item.status === "success")
+    const totalRevenue = successfulItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
 
-  const totalPages = Math.ceil(filteredAndSearchedItems.length / itemsPerPage)
-  const paginatedItems = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage
-    return filteredAndSearchedItems.slice(startIndex, startIndex + itemsPerPage)
-  }, [filteredAndSearchedItems, currentPage, itemsPerPage])
+    const revenueByService = data.reduce((acc, item) => {
+      if (item.status !== "success") return acc
+      const service = item.service_title
+      const revenue = item.price * item.quantity
+      const existing = acc.find((s) => s.name === service)
+      if (existing) {
+        existing.revenue += revenue
+      } else {
+        acc.push({ name: service, revenue })
+      }
+      return acc
+    }, [] as { name: string; revenue: number }[])
+
+    const ordersByStatus = Object.entries(
+      data.reduce((acc, item) => {
+        const status = item.status || "pending"
+        acc[status] = (acc[status] || 0) + 1
+        return acc
+      }, {} as { [key: string]: number })
+    ).map(([name, count]) => ({ name, count }))
+
+    return {
+      totalRevenue,
+      totalOrders: data.length,
+      successfulOrders: successfulItems.length,
+      pendingOrders: data.filter((item) => item.status === "pending" || item.status === "proses").length,
+      revenueByService: revenueByService.sort((a, b) => b.revenue - a.revenue),
+      ordersByStatus,
+      recentOrders: data.slice(0, 5),
+    }
+  }, [data])
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950 p-4">
+      <div className="flex h-full items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-coral-500" />
-        <p className="ml-2 text-white">Memuat dasbor...</p>
       </div>
     )
   }
 
   if (error) {
-    return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4 text-white">
-        <p className="text-red-500 mb-4">Error: {error}</p>
-        <Button onClick={handleLogout} className="bg-coral-500 hover:bg-coral-600">
-          <LogOut className="mr-2 h-4 w-4" />
-          Logout
-        </Button>
-      </div>
-    )
+    return <div className="text-red-500">Error loading dashboard data: {error}</div>
   }
 
   return (
-    <div className="p-4">
+    <div className="space-y-6">
+      <h1 className="text-3xl font-bold text-white">Dasbor Analitik</h1>
+
+      {/* Stat Cards */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="bg-slate-800/50 border-slate-700 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Total Pendapatan</CardTitle>
+            <DollarSign className="h-5 w-5 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(analytics.totalRevenue)}</div>
+            <p className="text-xs text-slate-500">Dari pesanan yang sukses</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-800/50 border-slate-700 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Total Pesanan</CardTitle>
+            <ShoppingCart className="h-5 w-5 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analytics.totalOrders}</div>
+            <p className="text-xs text-slate-500">Semua status pesanan</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-800/50 border-slate-700 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Pesanan Sukses</CardTitle>
+            <CheckCircle className="h-5 w-5 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analytics.successfulOrders}</div>
+            <p className="text-xs text-slate-500">Pesanan yang telah selesai</p>
+          </CardContent>
+        </Card>
+        <Card className="bg-slate-800/50 border-slate-700 text-white">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-400">Pesanan Pending/Proses</CardTitle>
+            <LoaderIcon className="h-5 w-5 text-yellow-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{analytics.pendingOrders}</div>
+            <p className="text-xs text-slate-500">Pesanan yang perlu ditindaklanjuti</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Charts */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-5">
+        <Card className="lg:col-span-3 bg-slate-800/50 border-slate-700 text-white">
+          <CardHeader>
+            <CardTitle className="text-white">Pendapatan per Layanan</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ChartContainer config={barChartConfig} className="h-80 w-full">
+              <BarChart data={analytics.revenueByService} accessibilityLayer>
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  className="text-xs"
+                />
+                <YAxis
+                  tickFormatter={(value) => formatCurrency(Number(value))}
+                  className="text-xs"
+                />
+                <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
+                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+              </BarChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2 bg-slate-800/50 border-slate-700 text-white">
+          <CardHeader>
+            <CardTitle className="text-white">Komposisi Status Pesanan</CardTitle>
+          </CardHeader>
+          <CardContent className="flex justify-center">
+            <ChartContainer config={pieChartConfig} className="h-80 w-full">
+              <PieChart accessibilityLayer>
+                <Tooltip content={<ChartTooltipContent hideLabel />} />
+                <Pie data={analytics.ordersByStatus} dataKey="count" nameKey="name">
+                  {analytics.ordersByStatus.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={`var(--color-${entry.name})`} />
+                  ))}
+                </Pie>
+                <Legend />
+              </PieChart>
+            </ChartContainer>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Orders Table */}
       <Card className="bg-slate-800/50 border-slate-700 text-white">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-          <CardTitle className="text-3xl font-bold text-coral-500">Dasbor Admin</CardTitle>
-          <div className="flex gap-2">
-            <Button onClick={handleLogout} variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-700">
-              <LogOut className="mr-2 h-4 w-4" />
-              Logout
-            </Button>
-          </div>
+        <CardHeader>
+          <CardTitle className="text-white">Pesanan Terbaru</CardTitle>
         </CardHeader>
         <CardContent>
-          <h2 className="text-xl font-semibold mb-4">Daftar Item Keranjang (Semua Pengguna)</h2>
-
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                type="text"
-                placeholder="Cari item keranjang..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value)
-                  setCurrentPage(1) // Reset to first page on search
-                }}
-                className="pl-10 bg-slate-700/50 border-slate-600 text-white placeholder:text-slate-400 focus:border-coral-500"
-              />
-            </div>
-            <Select
-              value={filterStatus}
-              onValueChange={(value) => {
-                setFilterStatus(value)
-                setCurrentPage(1) // Reset to first page on filter change
-              }}
-            >
-              <SelectTrigger className="w-[180px] bg-slate-700 border-slate-600 text-white">
-                <SelectValue placeholder="Filter Status" />
-              </SelectTrigger>
-              <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                {statusOptions.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status.charAt(0).toUpperCase() + status.slice(1)}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          {paginatedItems.length === 0 ? (
-            <p className="text-slate-400">Tidak ada item di keranjang saat ini yang cocok dengan filter Anda.</p>
-          ) : (
-            <div className="overflow-x-auto">
-              <Table className="min-w-full">
-                <TableHeader>
-                  <TableRow className="bg-slate-700/50">
-                    <TableHead className="text-white">ID</TableHead>
-                    <TableHead className="text-white">Layanan</TableHead>
-                    <TableHead className="text-white">Paket</TableHead>
-                    <TableHead className="text-white">Harga</TableHead>
-                    <TableHead className="text-white">Jumlah</TableHead>
-                    <TableHead className="text-white">Status</TableHead>
-                    <TableHead className="text-white">Pengguna/Sesi</TableHead>
-                    <TableHead className="text-white">Dibuat</TableHead>
-                    <TableHead className="text-white">Aksi</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {paginatedItems.map((item) => (
-                    <TableRow key={item.id} className="border-slate-700 hover:bg-slate-700/30">
-                      <TableCell className="font-medium text-sm">{item.id?.substring(0, 8)}...</TableCell>
-                      <TableCell>{item.service_title}</TableCell>
-                      <TableCell>{item.package_name}</TableCell>
-                      <TableCell>{formatCurrency(item.price)}</TableCell>
-                      <TableCell>{item.quantity}</TableCell>
-                      <TableCell>
-                        <Select
-                          value={item.status || "pending"}
-                          onValueChange={(newStatus) => updateCartItemStatus(item.id!, newStatus)}
-                          disabled={loading}
-                        >
-                          <SelectTrigger className="w-[120px] bg-slate-700 border-slate-600 text-white">
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-slate-800 border-slate-700 text-white">
-                            {statusOptions.filter(s => s !== 'all').map((status) => (
-                              <SelectItem key={status} value={status}>
-                                {status.charAt(0).toUpperCase() + status.slice(1)}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                      <TableCell className="text-sm">
-                        {item.user_id ? `User: ${item.user_id.substring(0, 8)}...` : `Session: ${item.session_id?.substring(0, 8)}...`}
-                      </TableCell>
-                      <TableCell className="text-sm">{new Date(item.created_at!).toLocaleString()}</TableCell>
-                      <TableCell>
-                        <Button
-                          size="icon"
-                          variant="outline"
-                          className="border-cyan-500 text-cyan-500 hover:bg-cyan-500/20"
-                          onClick={() => handleGenerateTemplate(item)}
-                          disabled={loading}
-                        >
-                          <ClipboardCopy className="h-4 w-4" />
-                          <span className="sr-only">Buat Template Pesan</span>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          )}
-
-          {/* Pagination Controls */}
-          {totalPages > 1 && (
-            <div className="flex justify-end items-center space-x-2 mt-4">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
-                disabled={currentPage === 1 || loading}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              <span className="text-sm text-slate-300">
-                Halaman {currentPage} dari {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
-                disabled={currentPage === totalPages || loading}
-                className="border-slate-600 text-slate-300 hover:bg-slate-700"
-              >
-                <ChevronRight className="h-4 w-4" />
-              </Button>
-            </div>
-          )}
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-slate-700/50 hover:bg-slate-700/50">
+                <TableHead className="text-white">Pelanggan</TableHead>
+                <TableHead className="text-white">Layanan</TableHead>
+                <TableHead className="text-white">Harga</TableHead>
+                <TableHead className="text-white">Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {analytics.recentOrders.map((item) => (
+                <TableRow key={item.id} className="border-slate-700">
+                  <TableCell>
+                    <div className="font-medium text-white">{item.customer_name || "N/A"}</div>
+                    <div className="text-sm text-slate-400">{item.customer_phone}</div>
+                  </TableCell>
+                  <TableCell>{item.service_title}</TableCell>
+                  <TableCell>{formatCurrency(item.price * item.quantity)}</TableCell>
+                  <TableCell>
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium text-white ${
+                        item.status === "success"
+                          ? "bg-green-500/20 text-green-400"
+                          : item.status === "proses"
+                          ? "bg-blue-500/20 text-blue-400"
+                          : item.status === "failed"
+                          ? "bg-red-500/20 text-red-400"
+                          : "bg-yellow-500/20 text-yellow-400"
+                      }`}
+                    >
+                      {item.status || "pending"}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
       </Card>
-
-      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
-        <DialogContent className="bg-slate-800 border-slate-700 text-white">
-          <DialogHeader>
-            <DialogTitle className="text-coral-500">Template Pesan untuk CS</DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <Textarea
-              readOnly
-              value={messageTemplate}
-              className="h-64 bg-slate-700/50 border-slate-600 text-white whitespace-pre-wrap"
-            />
-          </div>
-          <DialogFooter>
-            <Button
-              onClick={() => {
-                navigator.clipboard.writeText(messageTemplate)
-                setHasCopied(true)
-                setTimeout(() => setHasCopied(false), 2000)
-              }}
-              className={`w-full ${hasCopied ? "bg-green-600 hover:bg-green-700" : "bg-coral-500 hover:bg-coral-600"}`}
-            >
-              {hasCopied ? "Tersalin!" : "Salin Pesan"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
