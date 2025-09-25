@@ -13,9 +13,9 @@ const packages = [
     popular: false,
   },
   {
-    title: "Joki Skripsi",
+    title: "Joki Skripsi S1",
     price: "Mulai Dari 1.9Jt",
-    description: "Bantuan lengkap untuk penyelesaian skripsi dan thesis",
+    description: "Bantuan lengkap untuk penyelesaian skripsi S1",
     features: [
       "Proposal Skripsi",
       "BAB 1-5 Lengkap",

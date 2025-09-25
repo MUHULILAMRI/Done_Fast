@@ -25,7 +25,7 @@ export const services = [
   {
     id: "joki-skripsi",
     title: "Joki Skripsi",
-    description: "Bantuan penyelesaian skripsi, tesis, dan disertasi dengan kualitas terbaik",
+    description: "Bantuan penyelesaian skripsi S1 dengan kualitas terbaik",
     icon: BookOpen,
     category: "Academic",
     popular: true,

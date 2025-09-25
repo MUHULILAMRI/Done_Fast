@@ -20,9 +20,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog"
+import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Loader2, LogOut, Search, ChevronLeft, ChevronRight } from "lucide-react"
+import { Loader2, LogOut, Search, ChevronLeft, ChevronRight, ClipboardCopy } from "lucide-react"
 import type { CartItem } from "@/lib/cart-database"
+
+// Define a more detailed type for the admin dashboard
+interface AdminCartItem extends CartItem {
+  users: {
+    full_name: string | null
+    phone: string | null
+  } | null
+}
 
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
@@ -36,12 +52,15 @@ const formatCurrency = (amount: number) => {
 const statusOptions = ["all", "pending", "proses", "success", "failed"]
 
 export default function AdminDashboardPage() {
-  const [allCartItems, setAllCartItems] = useState<CartItem[]>([])
+  const [allCartItems, setAllCartItems] = useState<AdminCartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [filterStatus, setFilterStatus] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
   const [currentPage, setCurrentPage] = useState(1)
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
+  const [messageTemplate, setMessageTemplate] = useState("")
+  const [hasCopied, setHasCopied] = useState(false)
   const itemsPerPage = 10
 
   const router = useRouter()
@@ -49,7 +68,10 @@ export default function AdminDashboardPage() {
 
   useEffect(() => {
     const checkAuthAndFetchItems = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
+      setLoading(true)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
 
       if (!user) {
         router.push("/admin/login")
@@ -57,13 +79,45 @@ export default function AdminDashboardPage() {
       }
 
       try {
-        const { data, error } = await supabase.from("cart_items").select("*").order("created_at", { ascending: false })
+        // 1. Fetch all cart items
+        const { data: cartData, error: cartError } = await supabase
+          .from("cart_items")
+          .select("*")
+          .order("created_at", { ascending: false })
 
-        if (error) {
-          setError(error.message)
-        } else {
-          setAllCartItems(data as CartItem[])
+        if (cartError) {
+          throw cartError
         }
+
+        // 2. Extract unique user IDs from cart items
+        const userIds = [...new Set(cartData.map((item) => item.user_id).filter(Boolean))]
+
+        let usersData: { id: string; full_name: string | null; phone: string | null }[] = []
+
+        // 3. Fetch user details if there are any user IDs
+        if (userIds.length > 0) {
+          const { data: fetchedUsers, error: usersError } = await supabase
+            .from("users")
+            .select("id, full_name, phone")
+            .in("id", userIds)
+
+          if (usersError) {
+            console.error("Error fetching user details:", usersError.message)
+          } else {
+            usersData = fetchedUsers
+          }
+        }
+
+        // 4. Create a map of user details for easy lookup
+        const usersMap = new Map(usersData.map((user) => [user.id, user]))
+
+        // 5. Merge cart items with user details
+        const combinedData: AdminCartItem[] = cartData.map((item) => ({
+          ...item,
+          users: item.user_id ? usersMap.get(item.user_id) || null : null,
+        }))
+
+        setAllCartItems(combinedData)
       } catch (err: any) {
         setError(err.message)
       } finally {
@@ -97,6 +151,30 @@ export default function AdminDashboardPage() {
     } finally {
       setLoading(false)
     }
+  }
+
+  const handleGenerateTemplate = (item: AdminCartItem) => {
+    const userName = item.users?.full_name || "Pelanggan"
+    const phone = item.users?.phone || "Tidak ada nomor"
+
+    const message = `Halo, CS Done Fast.
+
+Mohon diproses pesanan untuk pelanggan atas nama:
+- Nama: ${userName}
+- No. WA: ${phone}
+
+Detail Pesanan:
+- Layanan: ${item.service_title}
+- Paket: ${item.package_name}
+- Jumlah: ${item.quantity}
+- Total: ${formatCurrency(item.price * item.quantity)}
+- Status Saat Ini: ${item.status}
+
+Terima kasih.`
+
+    setMessageTemplate(message)
+    setHasCopied(false)
+    setIsTemplateDialogOpen(true)
   }
 
   const filteredAndSearchedItems = useMemo(() => {
@@ -204,12 +282,13 @@ export default function AdminDashboardPage() {
                   <TableRow className="bg-slate-700/50">
                     <TableHead className="text-white">ID</TableHead>
                     <TableHead className="text-white">Layanan</TableHead>
-                    <TableHead className className="text-white">Paket</TableHead>
+                    <TableHead className="text-white">Paket</TableHead>
                     <TableHead className="text-white">Harga</TableHead>
                     <TableHead className="text-white">Jumlah</TableHead>
                     <TableHead className="text-white">Status</TableHead>
                     <TableHead className="text-white">Pengguna/Sesi</TableHead>
                     <TableHead className="text-white">Dibuat</TableHead>
+                    <TableHead className="text-white">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -242,6 +321,18 @@ export default function AdminDashboardPage() {
                         {item.user_id ? `User: ${item.user_id.substring(0, 8)}...` : `Session: ${item.session_id?.substring(0, 8)}...`}
                       </TableCell>
                       <TableCell className="text-sm">{new Date(item.created_at!).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="border-cyan-500 text-cyan-500 hover:bg-cyan-500/20"
+                          onClick={() => handleGenerateTemplate(item)}
+                          disabled={loading}
+                        >
+                          <ClipboardCopy className="h-4 w-4" />
+                          <span className="sr-only">Buat Template Pesan</span>
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -277,6 +368,33 @@ export default function AdminDashboardPage() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isTemplateDialogOpen} onOpenChange={setIsTemplateDialogOpen}>
+        <DialogContent className="bg-slate-800 border-slate-700 text-white">
+          <DialogHeader>
+            <DialogTitle className="text-coral-500">Template Pesan untuk CS</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <Textarea
+              readOnly
+              value={messageTemplate}
+              className="h-64 bg-slate-700/50 border-slate-600 text-white whitespace-pre-wrap"
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={() => {
+                navigator.clipboard.writeText(messageTemplate)
+                setHasCopied(true)
+                setTimeout(() => setHasCopied(false), 2000)
+              }}
+              className={`w-full ${hasCopied ? "bg-green-600 hover:bg-green-700" : "bg-coral-500 hover:bg-coral-600"}`}
+            >
+              {hasCopied ? "Tersalin!" : "Salin Pesan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

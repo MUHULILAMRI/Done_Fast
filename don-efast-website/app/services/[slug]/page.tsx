@@ -82,8 +82,8 @@ const servicesData = {
     ],
   },
   "joki-skripsi": {
-    title: "Joki Skripsi",
-    description: "Bantuan penyelesaian skripsi,  dengan kualitas terbaik",
+    title: "Joki Skripsi S1",
+    description: "Bantuan penyelesaian skripsi S1 dengan kualitas terbaik",
     price: "Mulai dari 900k",
     icon: BookOpen,
     category: "Academic",
@@ -91,7 +91,7 @@ const servicesData = {
     deliveryTime: "2-4 minggu",
     revisions: "Revisi berkali-kali",
     longDescription:
-      "Layanan bantuan penyelesaian skripsi. Kami membantu dari tahap proposal hingga sidang dengan pendampingan intensif dari dosen berpengalaman dan peneliti profesional.",
+      "Layanan bantuan penyelesaian skripsi khusus untuk mahasiswa S1. Kami membantu dari tahap proposal hingga sidang dengan pendampingan intensif dari konsultan berpengalaman.",
     features: [
       "Skripsi S1 semua jurusan",
       "Proposal & Bab 1-5 lengkap",

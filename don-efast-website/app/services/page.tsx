@@ -80,6 +80,17 @@ export default function ServicesPage() {
     return total
   }, 0)
 
+  const handleAddToCartSingle = (service: (typeof services)[0]) => {
+    console.log("Adding single service to cart:", service)
+    addToCart({
+      service_slug: service.id,
+      service_title: service.title,
+      package_name: "Paket Tunggal", // Default package name for single services
+      price: service.price || 0,
+      quantity: 1,
+    })
+  }
+
   const handleAddToCart = () => {
     console.log("Attempting to add to cart. Selected options:", selectedOptions)
     selectedOptions.forEach((optionId) => {
@@ -87,19 +98,13 @@ export default function ServicesPage() {
         if (service.subOptions) {
           const subOption = service.subOptions.find((opt) => opt.id === optionId)
           if (subOption) {
-            const itemToAdd = {
-              id: subOption.id,
-              name: `${service.title} - ${subOption.name}`,
-              price: Number(subOption.price), // Explicitly ensure it's a number
-              service_slug: service.id, // Corrected property name
-              service_title: service.title, // Corrected property name
-              package_name: subOption.name, // Corrected property name
-              features: subOption.features,
-            }
-            console.log("Adding item to cart:", itemToAdd)
-            console.log("Type of itemToAdd.price:", typeof itemToAdd.price, "Value:", itemToAdd.price)
-            addToCart(itemToAdd)
-            return // Move to next selected option
+            addToCart({
+              service_slug: service.id,
+              service_title: service.title,
+              package_name: subOption.name,
+              price: subOption.price,
+              quantity: 1,
+            })
           }
         }
       }
@@ -198,8 +203,22 @@ export default function ServicesPage() {
                       <CardContent className="space-y-6 pt-0">
                         {/* Base Price / Sub-options */}
                         {!service.subOptions ? (
-                          <div className="text-center">
-                            <div className="text-3xl font-bold text-coral-500 mb-2">{formatCurrency(service.price || 0)}</div>
+                          <div className="flex justify-between items-center p-3 rounded-lg border border-slate-600">
+                            <div>
+                              <p className="text-sm font-medium leading-none text-white">Paket Tunggal</p>
+                              <p className="text-xs text-slate-400">Layanan ini tidak memiliki opsi tambahan</p>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-coral-500">{formatCurrency(service.price || 0)}</div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="mt-2 border-coral-500 text-coral-500 hover:bg-coral-500 hover:text-white"
+                                onClick={() => handleAddToCartSingle(service)}
+                              >
+                                Tambah
+                              </Button>
+                            </div>
                           </div>
                         ) : (
                           <div className="space-y-4">
