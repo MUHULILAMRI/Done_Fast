@@ -11,6 +11,7 @@ export interface CartItem {
   quantity: number
   created_at?: string
   updated_at?: string
+  status?: string
 }
 
 // Generate session ID for anonymous users
