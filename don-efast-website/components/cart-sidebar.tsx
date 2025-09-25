@@ -19,7 +19,7 @@ export function CartSidebar() {
     let grandTotal = 0
 
     state.items.forEach((item, index) => {
-      const priceNumber = Number.parseInt(item.price.replace(/[^\d]/g, ""))
+      const priceNumber = item.price
       const subtotal = priceNumber * item.quantity
       grandTotal += subtotal
 

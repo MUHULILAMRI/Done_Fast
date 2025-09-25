@@ -1,8 +1,7 @@
-"use client"
-
 import { Button } from "@/components/ui/button"
 import { MessageCircle, Instagram } from "lucide-react"
-import { RobotFullWithMovingEyes } from "@/components/robot-full-with-moving-eyes"
+import Lottie from "lottie-react"
+import animationData from "@/public/animasi Donefast.json"
 
 export function HeroSection() {
   return (
@@ -44,9 +43,14 @@ export function HeroSection() {
 
           <div className="flex justify-center animate-in slide-in-from-right duration-1000 delay-300">
             <div className="relative">
-              {/* Robot Full Body with Moving Eyes Component */}
-              <RobotFullWithMovingEyes robotSize={350} pupilSize={10} pupilColor="#3536c0" maxPupilMove={5} robotMoveSensitivity={0.05} robotMoveRange={15} />
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent rounded-full blur-3xl"></div>
+                              <Lottie
+                                animationData={animationData}
+                                loop={true}
+                                autoplay={true}
+                                speed={0.5} // Set speed to 0.5 for half speed
+                                className="w-full h-auto max-w-[400px]"
+                                style={{ zIndex: 10 }}
+                              />              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-transparent rounded-full blur-3xl"></div>
             </div>
           </div>
         </div>

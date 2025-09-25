@@ -9,7 +9,7 @@ interface CartItem {
   serviceId: string
   serviceName: string
   packageName: string
-  price: string
+  price: number
   quantity: number
 }
 
@@ -121,7 +121,7 @@ function convertDBItemToCartItem(dbItem: DBCartItem): CartItem {
     serviceId: dbItem.service_slug,
     serviceName: dbItem.service_title,
     packageName: dbItem.package_name,
-    price: `Rp ${dbItem.price.toLocaleString("id-ID")}`,
+    price: dbItem.price,
     quantity: dbItem.quantity,
   }
 }
@@ -133,8 +133,7 @@ function convertCartItemToDBItem(
     service_slug: cartItem.serviceId,
     service_title: cartItem.serviceName,
     package_name: cartItem.packageName,
-    price: Number.parseInt(cartItem.price.replace(/[^\d]/g, "")),
-    quantity: 1,
+    price: cartItem.price,    quantity: 1,
   }
 }
 
