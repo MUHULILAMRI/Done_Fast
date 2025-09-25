@@ -35,7 +35,6 @@ import {
   Loader as LoaderIcon, // Renamed to avoid conflict
 } from "lucide-react"
 import type { CartItem } from "@/lib/cart-database"
-import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 
 // Helper function to format currency

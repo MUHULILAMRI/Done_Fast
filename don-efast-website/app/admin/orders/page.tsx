@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { Loader2, Search, ChevronLeft, ChevronRight, ClipboardCopy } from "lucide-react"
+import { Loader2, Search, ChevronLeft, ChevronRight, ClipboardCopy, ReceiptText } from "lucide-react"
 import type { CartItem } from "@/lib/cart-database"
 
 // Define a more detailed type for this page
@@ -59,6 +59,8 @@ export default function AdminOrdersPage() {
   const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
   const [messageTemplate, setMessageTemplate] = useState("")
   const [hasCopied, setHasCopied] = useState(false)
+  const [isInvoiceDialogOpen, setIsInvoiceDialogOpen] = useState(false)
+  const [selectedInvoiceItem, setSelectedInvoiceItem] = useState<AdminCartItem | null>(null)
   const itemsPerPage = 10
 
   const router = useRouter()
@@ -119,10 +121,6 @@ export default function AdminOrdersPage() {
 
     const message = `Halo, CS Done Fast.
 
-Mohon diproses pesanan untuk pelanggan atas nama:
-- Nama: ${userName}
-- No. WA: ${phone}
-
 Detail Pesanan:
 - Layanan: ${item.service_title}
 - Paket: ${item.package_name}
@@ -135,6 +133,11 @@ Terima kasih.`
     setMessageTemplate(message)
     setHasCopied(false)
     setIsTemplateDialogOpen(true)
+  }
+
+  const handleViewInvoice = (item: AdminCartItem) => {
+    setSelectedInvoiceItem(item)
+    setIsInvoiceDialogOpen(true)
   }
 
   const filteredAndSearchedItems = useMemo(() => {
@@ -273,7 +276,7 @@ Terima kasih.`
                         </Select>
                       </TableCell>
                       <TableCell className="text-sm text-slate-400">{new Date(item.created_at!).toLocaleString()}</TableCell>
-                      <TableCell>
+                      <TableCell className="flex gap-2">
                         <Button
                           size="icon"
                           variant="outline"
@@ -283,6 +286,16 @@ Terima kasih.`
                         >
                           <ClipboardCopy className="h-4 w-4" />
                           <span className="sr-only">Buat Template Pesan</span>
+                        </Button>
+                        <Button
+                          size="icon"
+                          variant="outline"
+                          className="border-indigo-500 text-indigo-500 hover:bg-indigo-500/20"
+                          onClick={() => handleViewInvoice(item)}
+                          disabled={loading}
+                        >
+                          <ReceiptText className="h-4 w-4" />
+                          <span className="sr-only">Lihat Invoice</span>
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -344,6 +357,62 @@ Terima kasih.`
               className={`w-full transition-colors ${hasCopied ? "bg-green-600 hover:bg-green-700" : "bg-coral-500 hover:bg-coral-600"}`}
             >
               {hasCopied ? "Tersalin!" : "Salin Pesan"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isInvoiceDialogOpen} onOpenChange={setIsInvoiceDialogOpen}>
+        <DialogContent className="sm:max-w-lg bg-slate-800 border-slate-700 text-white p-6">
+          <DialogHeader>
+            <DialogTitle className="text-coral-500 text-2xl">Faktur Pembayaran</DialogTitle>
+          </DialogHeader>
+          {selectedInvoiceItem && (
+            <div className="space-y-4 text-slate-300">
+              <div className="flex justify-between text-sm">
+                <p>Invoice ID: <span className="font-medium">#{selectedInvoiceItem.id?.substring(0, 8)}</span></p>
+                <p>Tanggal: <span className="font-medium">{new Date(selectedInvoiceItem.created_at!).toLocaleDateString()}</span></p>
+              </div>
+
+              <div className="border-t border-slate-700 pt-4">
+                <h3 className="font-semibold text-white mb-2">Detail Pelanggan:</h3>
+                <p>Nama: <span className="font-medium">{selectedInvoiceItem.customer_name || "N/A"}</span></p>
+                <p>No. WA: <span className="font-medium">{selectedInvoiceItem.customer_phone || "N/A"}</span></p>
+              </div>
+
+              <div className="border-t border-slate-700 pt-4">
+                <h3 className="font-semibold text-white mb-2">Detail Pesanan:</h3>
+                <Table className="w-full">
+                  <TableHeader>
+                    <TableRow className="bg-slate-700/50 hover:bg-slate-700/50">
+                      <TableHead className="text-white">Layanan</TableHead>
+                      <TableHead className="text-white">Paket</TableHead>
+                      <TableHead className="text-white">Harga Satuan</TableHead>
+                      <TableHead className="text-white">Jumlah</TableHead>
+                      <TableHead className="text-white text-right">Subtotal</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow className="border-slate-700">
+                      <TableCell>{selectedInvoiceItem.service_title}</TableCell>
+                      <TableCell>{selectedInvoiceItem.package_name}</TableCell>
+                      <TableCell>{formatCurrency(selectedInvoiceItem.price)}</TableCell>
+                      <TableCell>{selectedInvoiceItem.quantity}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(selectedInvoiceItem.price * selectedInvoiceItem.quantity)}</TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+
+              <div className="border-t border-slate-700 pt-4 flex justify-between items-center text-lg font-bold text-white">
+                <span>Total Pembayaran:</span>
+                <span>{formatCurrency(selectedInvoiceItem.price * selectedInvoiceItem.quantity)}</span>
+              </div>
+            </div>
+          )}
+          <DialogFooter className="pt-4">
+            <Button onClick={() => window.print()} className="bg-coral-500 hover:bg-coral-600">
+              Cetak Faktur
             </Button>
           </DialogFooter>
         </DialogContent>

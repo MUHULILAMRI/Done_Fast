@@ -174,9 +174,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
         dispatch({ type: "OPEN_CART" })
         toast({
           title: "Sukses!",
-          description: `${pendingItem.service_title} telah ditambahkan ke keranjang.`,
+          description: `${pendingItem.service_title} telah ditambahkan ke keranjang. WhatsApp akan terbuka untuk konfirmasi.`, // Updated description
           className: "bg-green-600 text-white border-green-700",
         })
+
+        // Generate WhatsApp message for the customer
+        const customerMessage = `Halo ${itemWithCustomerInfo.customer_name},
+
+Terima kasih telah memesan layanan di Done Fast.
+
+Detail Pesanan Anda:
+- Layanan: ${itemWithCustomerInfo.service_title}
+- Paket: ${itemWithCustomerInfo.package_name}
+- Jumlah: ${itemWithCustomerInfo.quantity}
+- Total: ${formatCurrency(itemWithCustomerInfo.price * itemWithCustomerInfo.quantity)}
+
+Admin kami akan segera menghubungi Anda untuk konfirmasi lebih lanjut dan detail pembayaran.
+
+Terima kasih.`
+
+        const whatsappUrl = `https://wa.me/${itemWithCustomerInfo.customer_phone}?text=${encodeURIComponent(customerMessage)}`
+        window.open(whatsappUrl, "_blank")
+
       } else {
         throw new Error("Failed to add item to database.")
       }
