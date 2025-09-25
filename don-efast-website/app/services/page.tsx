@@ -90,12 +90,14 @@ export default function ServicesPage() {
             const itemToAdd = {
               id: subOption.id,
               name: `${service.title} - ${subOption.name}`,
-              price: subOption.price,
-              service: service.title,
-              package: subOption.name,
+              price: Number(subOption.price), // Explicitly ensure it's a number
+              service_slug: service.id, // Corrected property name
+              service_title: service.title, // Corrected property name
+              package_name: subOption.name, // Corrected property name
               features: subOption.features,
             }
             console.log("Adding item to cart:", itemToAdd)
+            console.log("Type of itemToAdd.price:", typeof itemToAdd.price, "Value:", itemToAdd.price)
             addToCart(itemToAdd)
             return // Move to next selected option
           }

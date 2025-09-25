@@ -129,10 +129,11 @@ function convertDBItemToCartItem(dbItem: DBCartItem): CartItem {
 function convertCartItemToDBItem(
   cartItem: Omit<CartItem, "quantity">,
 ): Omit<DBCartItem, "id" | "created_at" | "updated_at"> {
+  console.log("[v0] convertCartItemToDBItem received cartItem:", cartItem)
   return {
-    service_slug: cartItem.serviceId,
-    service_title: cartItem.serviceName,
-    package_name: cartItem.packageName,
+    service_slug: cartItem.service_slug,
+    service_title: cartItem.service_title,
+    package_name: cartItem.package_name,
     price: cartItem.price,    quantity: 1,
   }
 }
@@ -164,6 +165,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [cartDB])
 
   const addToCart = async (item: Omit<CartItem, "quantity">) => {
+    console.log("[v0] addToCart received item:", item)
     dispatch({ type: "SET_LOADING", payload: true })
     try {
       const dbItem = convertCartItemToDBItem(item)
