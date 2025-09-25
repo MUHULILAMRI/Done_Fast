@@ -57,19 +57,19 @@ const barChartConfig = {
 const pieChartConfig = {
   pending: {
     label: "Pending",
-    color: "hsl(var(--chart-1))",
+    color: "#facc15", // Yellow-400
   },
   proses: {
     label: "Proses",
-    color: "hsl(var(--chart-2))",
+    color: "#3b82f6", // Blue-500
   },
   success: {
     label: "Success",
-    color: "hsl(var(--chart-3))",
+    color: "#22c55e", // Green-500
   },
   failed: {
     label: "Failed",
-    color: "hsl(var(--chart-4))",
+    color: "#ef4444", // Red-500
   },
 } satisfies ChartConfig
 
@@ -112,18 +112,25 @@ export default function AdminDashboardPage() {
     const successfulItems = data.filter((item) => item.status === "success")
     const totalRevenue = successfulItems.reduce((acc, item) => acc + item.price * item.quantity, 0)
 
-    const revenueByService = data.reduce((acc, item) => {
-      if (item.status !== "success") return acc
-      const service = item.service_title
-      const revenue = item.price * item.quantity
-      const existing = acc.find((s) => s.name === service)
-      if (existing) {
-        existing.revenue += revenue
-      } else {
-        acc.push({ name: service, revenue })
-      }
-      return acc
-    }, [] as { name: string; revenue: number }[])
+    const COLOR_PALETTE = ["#3b82f6", "#22c55e", "#f97316", "#8b5cf6", "#ec4899", "#14b8a6"]
+
+    const revenueByService = data
+      .reduce((acc, item) => {
+        if (item.status !== "success") return acc
+        const service = item.service_title
+        const revenue = item.price * item.quantity
+        const existing = acc.find((s) => s.name === service)
+        if (existing) {
+          existing.revenue += revenue
+        } else {
+          acc.push({ name: service, revenue })
+        }
+        return acc
+      }, [] as { name: string; revenue: number }[])
+      .map((item, index) => ({
+        ...item,
+        fill: COLOR_PALETTE[index % COLOR_PALETTE.length],
+      }))
 
     const ordersByStatus = Object.entries(
       data.reduce((acc, item) => {
@@ -226,7 +233,11 @@ export default function AdminDashboardPage() {
                   className="text-xs"
                 />
                 <Tooltip cursor={false} content={<ChartTooltipContent indicator="dot" />} />
-                <Bar dataKey="revenue" fill="var(--color-revenue)" radius={4} />
+                <Bar dataKey="revenue" radius={4}>
+                  {analytics.revenueByService.map((entry) => (
+                    <Cell key={entry.name} fill={entry.fill} />
+                  ))}
+                </Bar>
               </BarChart>
             </ChartContainer>
           </CardContent>
