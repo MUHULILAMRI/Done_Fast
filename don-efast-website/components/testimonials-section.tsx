@@ -5,25 +5,25 @@ import { Star } from "lucide-react"
 
 const testimonials = [
   {
-    name: "Ahmad Subarjo",
-    title: "Mahasiswa S2, UGM",
+    name: "Syahril Akbar, S.Kom. CADS., MTCNA",
+    title: "Mahasiswa S1",
     avatar: "/placeholder-user.jpg",
     rating: 5,
-    quote: "Pengerjaannya sangat cepat dan hasilnya luar biasa! Tim sangat membantu dan responsif selama proses pengerjaan skripsi saya. Sangat direkomendasikan!",
+    quote: "Mantapki tawwa Done Fast! Skripsi saya selesai tepat waktu dengan kualitas yang memuaskan. Terima kasih banyak!",
   },
   {
-    name: "Siti Lestari",
-    title: "Frontend Developer",
+    name: "Sony Achmad Djalil., S.Kom., MTCNA",
+    title: "Mahasiswa S1",
     avatar: "/placeholder-user.jpg",
     rating: 5,
-    quote: "Saya butuh bantuan untuk membuat API dan database untuk proyek sampingan saya. Done Fast menyelesaikannya dalam waktu singkat dengan kode yang bersih. Mantap!",
+    quote: "Recomendasi mentong ini jokian, satset baru cepat selesai sesuai dengan nama Done Fast",
   },
   {
-    name: "Budi Santoso",
-    title: "Mahasiswa Arsitektur",
+    name: "Risal, S.Pd",
+    title: "Mahasiswa Pendidikan",
     avatar: "/placeholder-user.jpg",
-    rating: 4,
-    quote: "Model 3D untuk tugas akhir saya sangat detail dan sesuai dengan brief. Ada beberapa revisi kecil tapi ditangani dengan baik. Hasilnya memuaskan.",
+    rating: 5,
+    quote: "Mantap",
   },
 ]
 

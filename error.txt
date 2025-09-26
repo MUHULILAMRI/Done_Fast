@@ -1,14 +1,14 @@
 Unhandled Runtime Error
-ReferenceError: useEffect is not defined
+ReferenceError: TestimonialsSection is not defined
 
 Source
-components/service-detail-drawer.tsx (40:3) @ useEffect
+app/page.tsx (22:8) @ TestimonialsSection
 
-  38 |
-  39 |   // Reset selection when service changes
-> 40 |   useEffect(() => {
-     |   ^
-  41 |     if (service) {
-  42 |       setSelectedOptions([])
-  43 |     }
+  20 |       <ServicesSection />
+  21 |       <PackagesSection />
+> 22 |       <TestimonialsSection />
+     |        ^
+  23 |       <ContactSection />
+  24 |       {/* <FloatingWhatsApp /> */}
+  25 |       <Footer />
 Call Stack

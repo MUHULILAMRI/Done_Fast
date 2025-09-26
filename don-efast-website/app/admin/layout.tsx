@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { Home, ShoppingCart, Users, Settings, LogOut, Loader2 } from "lucide-react"
+import { Home, ShoppingCart, Users, Settings, LogOut, Loader2, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { Menu } from "lucide-react"
@@ -14,6 +14,7 @@ import { Toaster } from "@/components/ui/sonner"
 const adminNavItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dasbor" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Pesanan" },
+  { href: "/admin/feedback", icon: MessageSquare, label: "Kritik & Saran" },
   // { href: "/admin/users", icon: Users, label: "Pengguna" }, // Future feature
   // { href: "/admin/settings", icon: Settings, label: "Pengaturan" }, // Future feature
 ]

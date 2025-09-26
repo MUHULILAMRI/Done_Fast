@@ -7,6 +7,7 @@ import { PackagesSection } from "@/components/packages-section"
 import { HowToOrderSection } from "@/components/how-to-order-section"
 import { ContactSection } from "@/components/contact-section"
 import { TestimonialsSection } from "@/components/testimonials-section"
+import { FeedbackSection } from "@/components/feedback-section"
 // import { FloatingWhatsApp } from "@/components/floating-whatsapp" // Removed
 import { Footer } from "@/components/footer"
 // import { RobotFullWithMovingEyes } from "@/components/robot-full-with-moving-eyes" // Removed
@@ -21,6 +22,7 @@ export default function HomePage() {
       <PackagesSection />
       <TestimonialsSection />
       <ContactSection />
+      <FeedbackSection />
       {/* <FloatingWhatsApp /> */}
       <Footer />
 
