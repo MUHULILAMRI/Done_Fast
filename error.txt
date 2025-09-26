@@ -1,10 +1,14 @@
-Failed to compile
+Unhandled Runtime Error
+ReferenceError: useEffect is not defined
 
-Next.js (14.2.16) is outdated (learn more)
-./app/page.tsx
-'client-only' cannot be imported from a Server Component module. It should only be used from a Client Component.
+Source
+components/service-detail-drawer.tsx (40:3) @ useEffect
 
-The error was caused by using 'styled-jsx' in './app/page.tsx'. It only works in a Client Component but none of its parents are marked with "use client", so they're Server Components by default.
-
-Import trace for requested module:
-./app/page.tsx
+  38 |
+  39 |   // Reset selection when service changes
+> 40 |   useEffect(() => {
+     |   ^
+  41 |     if (service) {
+  42 |       setSelectedOptions([])
+  43 |     }
+Call Stack

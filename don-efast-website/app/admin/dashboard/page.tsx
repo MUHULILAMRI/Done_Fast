@@ -33,9 +33,30 @@ import {
   ShoppingCart,
   CheckCircle,
   Loader as LoaderIcon, // Renamed to avoid conflict
+  Trash2,
 } from "lucide-react"
 import type { CartItem } from "@/lib/cart-database"
 import { Loader2 } from "lucide-react"
+
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { toast } from "sonner"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button"
 
 // Helper function to format currency
 const formatCurrency = (amount: number) => {
@@ -76,14 +97,34 @@ export default function AdminDashboardPage() {
   const [data, setData] = useState<CartItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [dateRange, setDateRange] = useState("all")
 
   useEffect(() => {
+    const supabase = createClient()
+
+    // Initial data fetch
     const fetchData = async () => {
       setLoading(true)
-      const { data: cartData, error: cartError } = await createClient()
+      let query = supabase
         .from("cart_items")
         .select("*")
         .order("created_at", { ascending: false })
+
+      if (dateRange !== "all") {
+        const date = new Date()
+        const daysToSubtract = {
+          "7d": 7,
+          "30d": 30,
+          "90d": 90,
+        }[dateRange]
+
+        if (daysToSubtract) {
+          date.setDate(date.getDate() - daysToSubtract)
+          query = query.gte("created_at", date.toISOString())
+        }
+      }
+
+      const { data: cartData, error: cartError } = await query
 
       if (cartError) {
         setError(cartError.message)
@@ -93,7 +134,26 @@ export default function AdminDashboardPage() {
       setLoading(false)
     }
     fetchData()
-  }, [])
+
+    /* Set up real-time subscription
+    const channel = supabase
+      .channel("cart_items_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cart_items" },
+        (payload) => {
+          console.log("Perubahan diterima:", payload)
+          // Refetch data to apply the current date range filter to new/updated items
+          fetchData()
+        }
+      )
+      .subscribe()
+
+    // Cleanup subscription on component unmount
+    return () => {
+      supabase.removeChannel(channel)
+    }*/
+  }, [dateRange])
 
   const analytics = useMemo(() => {
     if (!data || data.length === 0) {
@@ -150,6 +210,25 @@ export default function AdminDashboardPage() {
     }
   }, [data])
 
+  const [itemToDelete, setItemToDelete] = useState<CartItem | null>(null)
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return
+
+    const supabase = createClient()
+    const { error } = await supabase
+      .from("cart_items")
+      .delete()
+      .match({ id: itemToDelete.id })
+
+    if (error) {
+      toast.error(`Gagal menghapus pesanan: ${error.message}`)
+    } else {
+      toast.success("Pesanan telah berhasil dihapus.")
+    }
+    setItemToDelete(null) // Close the dialog
+  }
+
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -164,7 +243,20 @@ export default function AdminDashboardPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-white">Dasbor Analitik</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-white">Dasbor Analitik</h1>
+        <Select value={dateRange} onValueChange={setDateRange}>
+          <SelectTrigger className="w-[180px] bg-slate-800 border-slate-700 text-white focus:ring-coral-500">
+            <SelectValue placeholder="Pilih rentang waktu" />
+          </SelectTrigger>
+          <SelectContent className="bg-slate-800 border-slate-700 text-white">
+            <SelectItem value="all">Semua Waktu</SelectItem>
+            <SelectItem value="7d">7 Hari Terakhir</SelectItem>
+            <SelectItem value="30d">30 Hari Terakhir</SelectItem>
+            <SelectItem value="90d">90 Hari Terakhir</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -274,6 +366,7 @@ export default function AdminDashboardPage() {
                 <TableHead className="text-white">Layanan</TableHead>
                 <TableHead className="text-white">Harga</TableHead>
                 <TableHead className="text-white">Status</TableHead>
+                <TableHead className="text-white text-right">Aksi</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -300,12 +393,37 @@ export default function AdminDashboardPage() {
                       {item.status || "pending"}
                     </span>
                   </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setItemToDelete(item)}
+                      className="text-slate-400 hover:text-red-500 hover:bg-red-500/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={itemToDelete !== null} onOpenChange={(open) => !open && setItemToDelete(null)}>
+        <AlertDialogContent className="bg-slate-900 border-slate-800 text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Apakah Anda Yakin?</AlertDialogTitle>
+            <AlertDialogDescription className="text-slate-400">
+              Tindakan ini tidak dapat dibatalkan. Ini akan menghapus data pesanan secara permanen dari server.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-slate-700 bg-transparent hover:bg-slate-800 text-slate-300">Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white">Lanjutkan</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

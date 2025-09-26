@@ -9,6 +9,8 @@ import { Menu } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 import { useState, useEffect } from "react"
 
+import { Toaster } from "@/components/ui/sonner"
+
 const adminNavItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dasbor" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Pesanan" },
@@ -137,6 +139,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           {children}
         </main>
       </div>
+      <Toaster richColors theme="dark" />
     </div>
   )
 }

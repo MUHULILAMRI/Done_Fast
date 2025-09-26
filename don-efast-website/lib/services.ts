@@ -9,7 +9,30 @@ import {
   Users,
 } from "lucide-react"
 
-export const services = [
+import { LucideIcon } from "lucide-react"
+
+export type SubOption = {
+  id: string
+  name: string
+  price: number
+  features: string[]
+}
+
+export type Service = {
+  id: string
+  title: string
+  description: string
+  price?: number
+  icon: LucideIcon
+  category: string
+  popular: boolean
+  features: string[]
+  deliveryTime: string
+  revisions: string
+  subOptions?: SubOption[]
+}
+
+export const services: Service[] = [
   {
     id: "joki-penulisan",
     title: "Joki Penulisan",
@@ -32,6 +55,7 @@ export const services = [
     features: ["Skripsi S1", "Proposal & Bab 1-5", "Analisis Data SPSS/R"],
     deliveryTime: "2-4 minggu",
     revisions: "Revisi 4 kali",
+    price: 300000,
     subOptions: [
       {
         id: "skripsi-bab1-3",
@@ -44,6 +68,12 @@ export const services = [
         name: "Bab 4 - 5 + Free PPT",
         price: 1800000,
         features: ["Bab 4", "Bab 5", "Free Pembuatan PPT"],
+      },
+      {
+        id: "skripsi-full",
+        name: "Full Bab",
+        price: 2900000,
+        features: ["Bab 1-5 Lengkap", "Bimbingan Penuh", "Gratis Presentasi PPT"],
       },
     ],
   },
@@ -63,19 +93,32 @@ export const services = [
     id: "joki-jurnal",
     title: "Joki Jurnal Ilmiah",
     description: "Penulisan dan publikasi jurnal ilmiah berkualitas tinggi",
-    price: 1200000,
+    price: 200000,
     icon: Microscope,
     category: "Academic",
     popular: false,
     features: [
-      "Jurnal Nasional",
-      "Jurnal Internasional",
-      "Review & Editing",
-      "Bantuan Publikasi",
-      "Citation Management",
+      "Jurnal Nasional / Internasional",
+      "Review & Editing Profesional",
+      "Bantuan & Strategi Publikasi",
+      "Manajemen Sitasi",
     ],
     deliveryTime: "2-6 minggu",
     revisions: "5x revisi gratis",
+    subOptions: [
+      {
+        id: "jurnal-penulisan",
+        name: "Joki Penulisan Saja",
+        price: 200000,
+        features: ["Penulisan draf jurnal", "Struktur sesuai standar", "Referensi dasar"],
+      },
+      {
+        id: "jurnal-lengkap",
+        name: "Paket Lengkap (Penulisan & Bantuan Publikasi)",
+        price: 1200000,
+        features: ["Semua fitur penulisan", "Analisis & editing mendalam", "Bantuan submisi ke jurnal target"],
+      },
+    ],
   },
   {
     id: "joki-3d",
