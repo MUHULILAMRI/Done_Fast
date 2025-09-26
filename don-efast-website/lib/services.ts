@@ -44,6 +44,14 @@ export const services: Service[] = [
     features: ["Essay & Artikel", "Makalah & Paper", "Review Jurnal", "Proposal Penelitian", "Laporan Praktikum"],
     deliveryTime: "3-7 hari",
     revisions: "3x revisi gratis",
+    subOptions: [
+      {
+        id: "penulisan-standar",
+        name: "Paket Standar",
+        price: 250000,
+        features: ["Essay & Artikel", "Makalah & Paper", "Review Jurnal", "Proposal Penelitian", "Laporan Praktikum"],
+      },
+    ],
   },
   {
     id: "joki-skripsi",
@@ -88,6 +96,14 @@ export const services: Service[] = [
     features: ["Website & Web App", "Mobile App", "Desktop Application", "Database Design", "API Development"],
     deliveryTime: "1-3 minggu",
     revisions: "Support & konsultasi",
+    subOptions: [
+      {
+        id: "program-standar",
+        name: "Paket Standar",
+        price: 1500000,
+        features: ["Website & Web App", "Mobile App", "Desktop Application", "Database Design", "API Development"],
+      },
+    ],
   },
   {
     id: "joki-jurnal",
@@ -131,6 +147,14 @@ export const services: Service[] = [
     features: ["Architectural 3D", "Product Modeling", "Character Design", "Animation", "Rendering"],
     deliveryTime: "5-10 hari",
     revisions: "3x revisi gratis",
+    subOptions: [
+      {
+        id: "3d-standar",
+        name: "Paket Standar",
+        price: 1800000,
+        features: ["Architectural 3D", "Product Modeling", "Character Design", "Animation", "Rendering"],
+      },
+    ],
   },
   {
     id: "konsultasi",
@@ -143,6 +167,14 @@ export const services: Service[] = [
     features: ["Konsultasi 1-on-1", "Review Dokumen", "Guidance & Tips", "Q&A Session", "Follow-up Support"],
     deliveryTime: "1-2 hari",
     revisions: "Unlimited chat",
+    subOptions: [
+      {
+        id: "konsultasi-standar",
+        name: "Sesi Konsultasi",
+        price: 150000,
+        features: ["Konsultasi 1-on-1", "Review Dokumen", "Guidance & Tips", "Q&A Session", "Follow-up Support"],
+      },
+    ],
   },
 ]
 

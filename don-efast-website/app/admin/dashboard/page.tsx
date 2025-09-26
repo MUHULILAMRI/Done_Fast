@@ -34,6 +34,7 @@ import {
   CheckCircle,
   Loader as LoaderIcon, // Renamed to avoid conflict
   Trash2,
+  MessageSquare,
 } from "lucide-react"
 import type { CartItem } from "@/lib/cart-database"
 import { Loader2 } from "lucide-react"
@@ -67,6 +68,19 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
+// Helper function to format WhatsApp number
+const formatWaNumber = (phone: string | null | undefined) => {
+  if (!phone) return ''
+  let cleaned = phone.replace(/\D/g, '')
+  if (cleaned.startsWith('0')) {
+    return '62' + cleaned.substring(1)
+  }
+  if (cleaned.startsWith('62')) {
+    return cleaned
+  }
+  return '62' + cleaned
+}
+
 const barChartConfig = {
   revenue: {
     label: "Pendapatan",
@@ -76,22 +90,29 @@ const barChartConfig = {
 
 const pieChartConfig = {
   pending: {
-    label: "Pending",
+    label: "Pesanan Diterima",
     color: "#facc15", // Yellow-400
   },
   proses: {
-    label: "Proses",
+    label: "Dalam Pengerjaan",
     color: "#3b82f6", // Blue-500
   },
   success: {
-    label: "Success",
+    label: "Pesanan Selesai",
     color: "#22c55e", // Green-500
   },
   failed: {
-    label: "Failed",
+    label: "Gagal",
     color: "#ef4444", // Red-500
   },
 } satisfies ChartConfig
+
+const statusDisplay: { [key: string]: { label: string; color: string } } = {
+  pending: { label: "Pesanan Diterima", color: "bg-yellow-500/20 text-yellow-400" },
+  proses: { label: "Dalam Pengerjaan", color: "bg-blue-500/20 text-blue-400" },
+  success: { label: "Pesanan Selesai", color: "bg-green-500/20 text-green-400" },
+  failed: { label: "Gagal", color: "bg-red-500/20 text-red-400" },
+}
 
 export default function AdminDashboardPage() {
   const [data, setData] = useState<CartItem[]>([])
@@ -102,13 +123,30 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     const supabase = createClient()
 
-    // Initial data fetch
+    // Helper to check if a date string is within the selected date range
+    const isWithinRange = (dateStr: string) => {
+      if (dateRange === "all") return true
+
+      const date = new Date(dateStr)
+      const now = new Date()
+      const daysToSubtract = {
+        "7d": 7,
+        "30d": 30,
+        "90d": 90,
+      }[dateRange]
+
+      if (!daysToSubtract) return true
+
+      const pastDate = new Date()
+      pastDate.setDate(now.getDate() - daysToSubtract)
+      pastDate.setHours(0, 0, 0, 0) // Start of the day
+
+      return date >= pastDate
+    }
+
     const fetchData = async () => {
       setLoading(true)
-      let query = supabase
-        .from("cart_items")
-        .select("*")
-        .order("created_at", { ascending: false })
+      let query = supabase.from("cart_items").select("*").order("created_at", { ascending: false })
 
       if (dateRange !== "all") {
         const date = new Date()
@@ -120,6 +158,7 @@ export default function AdminDashboardPage() {
 
         if (daysToSubtract) {
           date.setDate(date.getDate() - daysToSubtract)
+          date.setHours(0, 0, 0, 0) // Start of the day
           query = query.gte("created_at", date.toISOString())
         }
       }
@@ -133,26 +172,55 @@ export default function AdminDashboardPage() {
       }
       setLoading(false)
     }
+
     fetchData()
 
-    /* Set up real-time subscription
     const channel = supabase
       .channel("cart_items_realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "cart_items" },
         (payload) => {
-          console.log("Perubahan diterima:", payload)
-          // Refetch data to apply the current date range filter to new/updated items
-          fetchData()
+          console.log("Realtime change received:", payload)
+          const newData = payload.new as CartItem
+          const oldId = (payload.old as { id: string })?.id
+
+          setData((currentData) => {
+            if (payload.eventType === "INSERT") {
+              return isWithinRange(newData.created_at) ? [newData, ...currentData] : currentData
+            }
+
+            if (payload.eventType === "UPDATE") {
+              const itemIsInRange = isWithinRange(newData.created_at)
+              const itemIsInCurrentData = currentData.some((item) => item.id === newData.id)
+
+              if (itemIsInRange && !itemIsInCurrentData) {
+                // Add item that moved into range, and re-sort
+                return [...currentData, newData].sort(
+                  (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+                )
+              } else if (!itemIsInRange && itemIsInCurrentData) {
+                // Remove item that moved out of range
+                return currentData.filter((item) => item.id !== newData.id)
+              } else {
+                // Update item already in range
+                return currentData.map((item) => (item.id === newData.id ? newData : item))
+              }
+            }
+
+            if (payload.eventType === "DELETE") {
+              return currentData.filter((item) => item.id !== oldId)
+            }
+
+            return currentData
+          })
         }
       )
       .subscribe()
 
-    // Cleanup subscription on component unmount
     return () => {
       supabase.removeChannel(channel)
-    }*/
+    }
   }, [dateRange])
 
   const analytics = useMemo(() => {
@@ -227,6 +295,19 @@ export default function AdminDashboardPage() {
       toast.success("Pesanan telah berhasil dihapus.")
     }
     setItemToDelete(null) // Close the dialog
+  }
+
+  const updateCartItemStatus = async (itemId: string, newStatus: string) => {
+    const supabase = createClient()
+    const { error } = await supabase.from("cart_items").update({ status: newStatus }).eq("id", itemId)
+
+    if (error) {
+      toast.error(`Gagal memperbarui status: ${error.message}`)
+    } else {
+      const statusLabel = statusDisplay[newStatus]?.label || newStatus
+      toast.success(`Status pesanan diperbarui menjadi "${statusLabel}"`)
+      // The real-time subscription will handle the UI update
+    }
   }
 
   if (loading) {
@@ -374,24 +455,37 @@ export default function AdminDashboardPage() {
                 <TableRow key={item.id} className="border-slate-700">
                   <TableCell>
                     <div className="font-medium text-white">{item.customer_name || "N/A"}</div>
-                    <div className="text-sm text-slate-400">{item.customer_phone}</div>
+                    {item.customer_phone && (
+                        <a
+                        href={`https://wa.me/${formatWaNumber(item.customer_phone)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-slate-400 hover:text-coral-500 flex items-center gap-2 mt-1"
+                        >
+                        <MessageSquare className="w-3 h-3" />
+                        {item.customer_phone}
+                        </a>
+                    )}
                   </TableCell>
                   <TableCell>{item.service_title}</TableCell>
                   <TableCell>{formatCurrency(item.price * item.quantity)}</TableCell>
                   <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium text-white ${
-                        item.status === "success"
-                          ? "bg-green-500/20 text-green-400"
-                          : item.status === "proses"
-                          ? "bg-blue-500/20 text-blue-400"
-                          : item.status === "failed"
-                          ? "bg-red-500/20 text-red-400"
-                          : "bg-yellow-500/20 text-yellow-400"
-                      }`}
+                    <Select
+                      value={item.status || "pending"}
+                      onValueChange={(newStatus) => updateCartItemStatus(item.id!, newStatus)}
                     >
-                      {item.status || "pending"}
-                    </span>
+                      <SelectTrigger
+                        className={`w-[180px] text-xs border-none focus:ring-0 ${statusDisplay[item.status || "pending"]?.color || "bg-gray-500/20 text-gray-400"}`}>
+                        <SelectValue placeholder="Ubah Status" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-slate-800 border-slate-700 text-white">
+                        {Object.entries(statusDisplay).map(([value, { label }]) => (
+                          <SelectItem key={value} value={value}>
+                            {label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
