@@ -57,12 +57,12 @@ export function Navbar() {
                 pathname.startsWith("/services") ? "text-coral-500" : "text-white hover:text-coral-500"
               }`}
             >
-              Semua Layanan
+              Layanan
             </Link>
             {isHomepage ? (
               <>
-                <a href="#layanan" className="text-white hover:text-coral-500 transition-colors">
-                  Layanan
+                <a href="#jasa" className="text-white hover:text-coral-500 transition-colors">
+                  Jasa
                 </a>
                 <a href="#paket" className="text-white hover:text-coral-500 transition-colors">
                   Paket

@@ -40,7 +40,7 @@ const services = [
 
 export function ServicesSection() {
   return (
-    <section id="layanan" className="py-20 bg-card">
+    <section id="jasa" className="py-20 bg-card">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16 animate-in fade-in duration-1000">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">Layanan Utama</h2>
