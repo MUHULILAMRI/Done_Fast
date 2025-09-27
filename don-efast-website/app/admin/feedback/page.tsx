@@ -142,7 +142,7 @@ export default function AdminFeedbackPage() {
   const paginatedItems = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage
     return filteredAndSearchedItems.slice(startIndex, startIndex + itemsPerPage)
-  }, [filteredAndSearchedItems, currentPage, itemsPerPage])
+  }, [filteredAndSearchedItems, currentPage])
 
   if (loading) {
     return (
@@ -215,8 +215,8 @@ export default function AdminFeedbackPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {paginatedItems.map((item) => (
-                    <TableRow key={item.id} className="border-slate-700 hover:bg-slate-700/30">
+                  {paginatedItems.map((item, index) => (
+                    <TableRow key={item.id || index} className="border-slate-700 hover:bg-slate-700/30">
                       <TableCell className="font-medium text-sm">#{item.id?.substring(0, 8)}</TableCell>
                       <TableCell className="text-sm">
                         <p className="font-medium text-white">{item.name || "Anonim"}</p>
@@ -236,7 +236,7 @@ export default function AdminFeedbackPage() {
                           {item.is_read ? "Dibaca" : "Belum Dibaca"}
                         </label>
                       </TableCell>
-                      <TableCell className="text-sm text-slate-400">{new Date(item.created_at!).toLocaleString()}</TableCell>
+                      <TableCell className="text-sm text-slate-400">{item.created_at ? new Date(item.created_at).toLocaleString() : ''}</TableCell>
                       <TableCell className="flex gap-2 justify-end">
                         <Button
                           size="icon"
