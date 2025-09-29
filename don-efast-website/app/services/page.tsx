@@ -23,29 +23,27 @@ const formatCurrency = (amount: number) => {
 
 export default function ServicesPage() {
   const [allServices, setAllServices] = useState<Service[]>([]);
-  // const [loadingServices, setLoadingServices] = useState(true); // Commented out for debugging
+  const [loadingServices, setLoadingServices] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const [mounted, setMounted] = useState(false);
 
-  // useEffect(() => { // Commented out for debugging
-  //   const fetchServicesData = async () => {
-  //     setLoadingServices(true);
-  //     const servicesData = await getServices();
-  //     setAllServices(servicesData);
-  //     setLoadingServices(false);
-  //   };
-  //   fetchServicesData();
-  // }, []);
-
-  // Temporarily fetch services directly for debugging
   useEffect(() => {
-    const fetchServices = async () => {
-      const servicesData = await getServices();
-      setAllServices(servicesData);
-    };
-    fetchServices();
+    setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (mounted) {
+      const fetchServicesData = async () => {
+        setLoadingServices(true);
+        const servicesData = await getServices();
+        setAllServices(servicesData);
+        setLoadingServices(false);
+      };
+      fetchServicesData();
+    }
+  }, [mounted]);
 
   const filteredServices = allServices.filter((service) => {
     const matchesCategory = selectedCategory === "All" || service.category === selectedCategory;
@@ -60,14 +58,14 @@ export default function ServicesPage() {
     return allServices.filter((service) => service.category === category).length;
   };
 
-  // if (loadingServices) { // Commented out for debugging
-  //   return (
-  //     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-  //       <Loader2 className="h-8 w-8 animate-spin text-coral-500" />
-  //       <p className="ml-2">Memuat layanan...</p>
-  //     </div>
-  //   );
-  // }
+  if (!mounted || loadingServices) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+        <Loader2 className="h-8 w-8 animate-spin text-coral-500" />
+        <p className="ml-2">Memuat layanan...</p>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navbar />
