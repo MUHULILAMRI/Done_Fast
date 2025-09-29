@@ -15,6 +15,7 @@ const adminNavItems = [
   { href: "/admin/dashboard", icon: Home, label: "Dasbor" },
   { href: "/admin/orders", icon: ShoppingCart, label: "Pesanan" },
   { href: "/admin/feedback", icon: MessageSquare, label: "Kritik & Saran" },
+  { href: "/admin/services", icon: Settings, label: "Layanan" },
   // { href: "/admin/users", icon: Users, label: "Pengguna" }, // Future feature
   // { href: "/admin/settings", icon: Settings, label: "Pengaturan" }, // Future feature
 ]

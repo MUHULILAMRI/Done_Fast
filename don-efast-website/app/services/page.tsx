@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Star, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { services, categories, type Service } from "@/lib/services"
+import { getServices, categories, type Service } from "@/lib/services"
 import { ServiceDetailDrawer } from "@/components/service-detail-drawer"
 
 // Helper function to format currency
@@ -21,23 +21,24 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-export default function ServicesPage() {
-  const [selectedCategory, setSelectedCategory] = useState("All")
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedService, setSelectedService] = useState<Service | null>(null)
+export default async function ServicesPage() {
+  const allServices = await getServices();
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
 
-  const filteredServices = services.filter((service) => {
-    const matchesCategory = selectedCategory === "All" || service.category === selectedCategory
+  const filteredServices = allServices.filter((service) => {
+    const matchesCategory = selectedCategory === "All" || service.category === selectedCategory;
     const matchesSearch =
       service.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      service.description.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
-  })
+      service.description.toLowerCase().includes(searchQuery.toLowerCase());
+    return matchesCategory && matchesSearch;
+  });
 
   const getCategoryCount = (category: string) => {
-    if (category === "All") return services.length
-    return services.filter((service) => service.category === category).length
-  }
+    if (category === "All") return allServices.length;
+    return allServices.filter((service) => service.category === category).length;
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
