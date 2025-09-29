@@ -7,7 +7,7 @@ import { FloatingWhatsApp } from "@/components/floating-whatsapp"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Star, Search } from "lucide-react"
+import { Star, Search, Loader2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { getServices, categories, type Service } from "@/lib/services"
 import { ServiceDetailDrawer } from "@/components/service-detail-drawer"
@@ -23,19 +23,28 @@ const formatCurrency = (amount: number) => {
 
 export default function ServicesPage() {
   const [allServices, setAllServices] = useState<Service[]>([]);
-  const [loadingServices, setLoadingServices] = useState(true);
+  // const [loadingServices, setLoadingServices] = useState(true); // Commented out for debugging
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
 
+  // useEffect(() => { // Commented out for debugging
+  //   const fetchServicesData = async () => {
+  //     setLoadingServices(true);
+  //     const servicesData = await getServices();
+  //     setAllServices(servicesData);
+  //     setLoadingServices(false);
+  //   };
+  //   fetchServicesData();
+  // }, []);
+
+  // Temporarily fetch services directly for debugging
   useEffect(() => {
-    const fetchServicesData = async () => {
-      setLoadingServices(true);
+    const fetchServices = async () => {
       const servicesData = await getServices();
       setAllServices(servicesData);
-      setLoadingServices(false);
     };
-    fetchServicesData();
+    fetchServices();
   }, []);
 
   const filteredServices = allServices.filter((service) => {
@@ -51,14 +60,14 @@ export default function ServicesPage() {
     return allServices.filter((service) => service.category === category).length;
   };
 
-  if (loadingServices) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
-        <Loader2 className="h-8 w-8 animate-spin text-coral-500" />
-        <p className="ml-2">Memuat layanan...</p>
-      </div>
-    );
-  }
+  // if (loadingServices) { // Commented out for debugging
+  //   return (
+  //     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+  //       <Loader2 className="h-8 w-8 animate-spin text-coral-500" />
+  //       <p className="ml-2">Memuat layanan...</p>
+  //     </div>
+  //   );
+  // }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navbar />

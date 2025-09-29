@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { ShoppingCart, Star, Clock, Shield, X } from "lucide-react"
+import { ShoppingCart, Star, Clock, Shield, X, Loader2 } from "lucide-react"
 import { useCart } from "@/components/cart-provider"
 import type { Service } from "@/lib/services" // Assuming you have a Service type defined
 
