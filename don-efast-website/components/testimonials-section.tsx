@@ -9,7 +9,7 @@ const testimonials = [
     title: "Mahasiswa S1",
     avatar: "/placeholder-user.jpg",
     rating: 5,
-    quote: "Mantapki tawwa Done Fast! Skripsi saya selesai tepat waktu dengan kualitas yang memuaskan. Terima kasih banyak!",
+    quote: "Mantapki tawwa Done Fast! Program saya selesai tepat waktu dengan kualitas yang memuaskan. Terima kasih banyak!",
   },
   {
     name: "Sony Achmad Djalil., S.Kom., MTCNA",
