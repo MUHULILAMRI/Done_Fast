@@ -21,11 +21,22 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-export default async function ServicesPage() {
-  const allServices = await getServices();
+export default function ServicesPage() {
+  const [allServices, setAllServices] = useState<Service[]>([]);
+  const [loadingServices, setLoadingServices] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedService, setSelectedService] = useState<Service | null>(null);
+
+  useEffect(() => {
+    const fetchServicesData = async () => {
+      setLoadingServices(true);
+      const servicesData = await getServices();
+      setAllServices(servicesData);
+      setLoadingServices(false);
+    };
+    fetchServicesData();
+  }, []);
 
   const filteredServices = allServices.filter((service) => {
     const matchesCategory = selectedCategory === "All" || service.category === selectedCategory;
@@ -40,6 +51,14 @@ export default async function ServicesPage() {
     return allServices.filter((service) => service.category === category).length;
   };
 
+  if (loadingServices) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 text-white">
+        <Loader2 className="h-8 w-8 animate-spin text-coral-500" />
+        <p className="ml-2">Memuat layanan...</p>
+      </div>
+    );
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900">
       <Navbar />
